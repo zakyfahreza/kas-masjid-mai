@@ -241,20 +241,33 @@ function handleTypeToggle(type) {
 }
 
 function filterCategories(type) {
-  const incomeGroup = document.getElementById('incomeCategories');
-  const expenseGroup = document.getElementById('expenseCategories');
   const select = document.getElementById('txCategory');
-  if (type === 'income') {
-    incomeGroup.style.display = '';
-    expenseGroup.style.display = 'none';
+  const currentVal = select.value;
+  
+  const incomeOptions = [
+    'Infaq Jumat', 'Infaq Harian', 'Zakat', 'Sedekah', 'Donasi', 'Lainnya'
+  ];
+  
+  const expenseOptions = [
+    'Listrik', 'Air', 'Kebersihan', 'Perbaikan', 'Kegiatan', 'Gaji Marbot', 'Mukafaah Ustadz', 'Lainnya'
+  ];
+  
+  const options = type === 'income' ? incomeOptions : expenseOptions;
+  const label = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+  
+  let html = '<option value="">-- Pilih Kategori --</option>';
+  html += `<optgroup label="${label}">`;
+  options.forEach(opt => {
+    html += `<option value="${opt}">${opt}</option>`;
+  });
+  html += '</optgroup>';
+  
+  select.innerHTML = html;
+  
+  // Restore selection if it exists in the new options
+  if (options.includes(currentVal)) {
+    select.value = currentVal;
   } else {
-    incomeGroup.style.display = 'none';
-    expenseGroup.style.display = '';
-  }
-  // Reset selection if current value belongs to hidden group
-  const selected = select.value;
-  const visibleOptions = [...select.querySelectorAll('optgroup:not([style*="display: none"]) option')];
-  if (selected && !visibleOptions.some(o => o.value === selected)) {
     select.value = '';
   }
 }

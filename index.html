@@ -216,9 +216,15 @@
       <div id="reportsPage" class="page">
         <div class="page-content">
           <div class="section-title">Laporan Keuangan</div>
-          <div class="filter-bar">
-            <input type="date" id="reportStart" title="Dari tanggal">
-            <input type="date" id="reportEnd" title="Sampai tanggal">
+          <div class="filter-bar" style="gap:12px;">
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;font-weight:600;">DARI TANGGAL</label>
+              <input type="date" id="reportStart" style="width:100%;margin:0;">
+            </div>
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--text-secondary);display:block;margin-bottom:6px;font-weight:600;">SAMPAI TANGGAL</label>
+              <input type="date" id="reportEnd" style="width:100%;margin:0;">
+            </div>
           </div>
           <div class="filter-bar">
             <select id="reportCategory">
