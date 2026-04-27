@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplikasi Keuangan Masjid Al-Ikhlas - Pencatatan pemasukan dan pengeluaran masjid">
+  <title>Masjid Al-Ikhlas Finance</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ===== LOGIN PAGE ===== -->
+  <div id="loginPage" class="page active">
+    <div class="login-page">
+      <div class="login-logo">
+        <img src="logo.png" alt="Logo Masjid Al-Ikhlas" style="width: 100%; height: 100%; object-fit: contain;">
+      </div>
+      <div class="login-title">Masjid Al-Ikhlas Adi Sucipto </div>
+      <div class="login-subtitle">Sistem Keuangan Masjid</div>
+      <div class="login-card">
+        <h3>Login Pengelola</h3>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUser" placeholder="Masukkan username">
+          <div class="error-text">Username wajib diisi</div>
+        </div>
+        <div class="form-group">
+          <label>PIN</label>
+          <input type="password" id="loginPin" placeholder="Masukkan PIN" maxlength="6">
+          <div class="error-text">PIN wajib diisi (4-6 digit)</div>
+        </div>
+        <label
+          style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);margin-bottom:20px;cursor:pointer">
+          <input type="checkbox" id="rememberMe" checked> Ingat saya
+        </label>
+        <button class="btn btn-primary" id="loginBtn">Masuk</button>
+      </div>
+      <p style="margin-top:20px;font-size:11px;color:var(--text-secondary)">Hanya Bendahara & Marbot dapat login</p>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div id="mainApp" style="display:none">
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-row">
+          <div>
+            <h1>
+              <img src="logo.png" alt="Logo" style="width:24px;height:24px;object-fit:contain;">
+              Kas Masjid Al-Ikhlas
+            </h1>
+            <p id="headerGreeting">Ahlan wa Sahlan</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span id="roleBadge" style="font-size:11px;color:var(--text-secondary);font-weight:500;"></span>
+            <button class="btn-icon" id="logoutBtn" title="Logout">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Page -->
+      <div id="dashboardPage" class="page active">
+        <div class="page-content">
+          <div class="summary-cards">
+            <div class="summary-card income">
+              <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="1.5">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg></span>
+              <div class="card-label">Total Pemasukan</div>
+              <div class="card-value" id="totalIncome">Rp 0</div>
+            </div>
+            <div class="summary-card expense">
+              <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="1.5">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                  <polyline points="17 18 23 18 23 12"></polyline>
+                </svg></span>
+              <div class="card-label">Total Pengeluaran</div>
+              <div class="card-value" id="totalExpense">Rp 0</div>
+            </div>
+            <div class="summary-card balance">
+              <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="1.5">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg></span>
+              <div class="card-label">Saldo Saat Ini</div>
+              <div class="card-value" id="totalBalance">Rp 0</div>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <div class="section-title">Grafik Keuangan</div>
+            <div class="chart-tabs">
+              <button class="chart-tab active" data-chart="bar">Bar</button>
+              <button class="chart-tab" data-chart="pie">Pie</button>
+            </div>
+            <canvas id="mainChart"></canvas>
+          </div>
+
+          <div class="section-title">Transaksi Terakhir <span class="see-all" onclick="navigateTo('history')">Lihat
+              Semua →</span></div>
+          <div class="tx-list" id="recentTxList"></div>
+        </div>
+      </div>
+
+      <!-- Add Transaction Page -->
+      <div id="addPage" class="page">
+        <div class="page-content">
+          <div class="section-title">Tambah Transaksi</div>
+          <form id="txForm" onsubmit="return false">
+            <div class="type-toggle">
+              <button type="button" class="type-btn active-income" data-type="income" id="btnIncome">Pemasukan</button>
+              <button type="button" class="type-btn" data-type="expense" id="btnExpense">Pengeluaran</button>
+            </div>
+            <input type="hidden" id="txType" value="income">
+            <div class="form-group">
+              <label>Jumlah (Rp)</label>
+              <input type="text" id="txAmount" placeholder="Rp 0">
+              <div class="error-text">Jumlah wajib diisi</div>
+            </div>
+            <div class="form-group">
+              <label>Kategori</label>
+              <select id="txCategory">
+                <option value="">-- Pilih Kategori --</option>
+                <optgroup label="Pemasukan" id="incomeCategories">
+                  <option value="Infaq Jumat">Infaq Jumat</option>
+                  <option value="Infaq Harian">Infaq Harian</option>
+                  <option value="Zakat">Zakat</option>
+                  <option value="Sedekah">Sedekah</option>
+                  <option value="Donasi">Donasi</option>
+                  <option value="Lainnya">Lainnya</option>
+                </optgroup>
+                <optgroup label="Pengeluaran" id="expenseCategories">
+                  <option value="Listrik">Listrik</option>
+                  <option value="Air">Air</option>
+                  <option value="Kebersihan">Kebersihan</option>
+                  <option value="Perbaikan">Perbaikan</option>
+                  <option value="Kegiatan">Kegiatan</option>
+                  <option value="Gaji Marbot">Gaji Marbot</option>
+                  <option value="Mukafaah Ustadz">Mukafaah Ustadz</option>
+                  <option value="Lainnya">Lainnya</option>
+                </optgroup>
+              </select>
+              <div class="error-text">Kategori wajib dipilih</div>
+            </div>
+            <div class="form-group">
+              <label>Tanggal</label>
+              <input type="date" id="txDate">
+              <div class="error-text">Tanggal wajib diisi</div>
+            </div>
+            <div class="form-group">
+              <label>Keterangan</label>
+              <textarea id="txDesc" placeholder="Deskripsi transaksi..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Bukti Transaksi</label>
+              <div class="file-upload" id="fileUploadArea">
+                <input type="file" id="txFile" accept="image/*,.pdf">
+                <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px">
+                    <path
+                      d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                    </path>
+                  </svg></div>
+                <div class="upload-text">Klik atau seret file ke sini</div>
+                <div class="upload-hint">Format: JPG, PNG, PDF (maks. 5MB)</div>
+              </div>
+              <div class="file-preview" id="filePreview">
+                <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg></span>
+                <span id="fileName">file.jpg</span>
+                <span class="remove-file" id="removeFile">✕</span>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="submitTx">Simpan Transaksi</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- History Page -->
+      <div id="historyPage" class="page">
+        <div class="page-content">
+          <div class="section-title">Riwayat Transaksi</div>
+          <div class="filter-bar">
+            <select id="historyFilter">
+              <option value="all">Semua</option>
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+            <input type="text" id="historySearch" placeholder="🔍 Cari...">
+          </div>
+          <div class="tx-list" id="historyTxList"></div>
+        </div>
+      </div>
+
+      <!-- Reports Page -->
+      <div id="reportsPage" class="page">
+        <div class="page-content">
+          <div class="section-title">Laporan Keuangan</div>
+          <div class="filter-bar">
+            <input type="date" id="reportStart" title="Dari tanggal">
+            <input type="date" id="reportEnd" title="Sampai tanggal">
+          </div>
+          <div class="filter-bar">
+            <select id="reportCategory">
+              <option value="all">Semua Kategori</option>
+              <option value="Infaq Jumat">Infaq Jumat</option>
+              <option value="Infaq Harian">Infaq Harian</option>
+              <option value="Zakat">Zakat</option>
+              <option value="Sedekah">Sedekah</option>
+              <option value="Donasi">Donasi</option>
+              <option value="Listrik">Listrik</option>
+              <option value="Air">Air</option>
+              <option value="Kebersihan">Kebersihan</option>
+              <option value="Perbaikan">Perbaikan</option>
+              <option value="Kegiatan">Kegiatan</option>
+              <option value="Gaji">Gaji Marbot</option>
+            </select>
+            <select id="reportType">
+              <option value="all">Semua Tipe</option>
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+          </div>
+          <div class="export-btns">
+            <button class="btn btn-secondary btn-sm" id="exportPdf"><svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                style="width:14px;height:14px">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg> Export PDF</button>
+            <button class="btn btn-outline btn-sm" id="exportExcel"><svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                style="width:14px;height:14px">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg> Export Excel</button>
+          </div>
+          <div class="summary-cards" id="reportSummary" style="margin-bottom:16px"></div>
+          <div class="data-table" id="reportTable"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" data-page="dashboard">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg></span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-page="add">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+              stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg></span>
+          <span class="nav-label">Transaksi</span>
+        </button>
+        <button class="nav-item" data-page="history">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg></span>
+          <span class="nav-label">Riwayat</span>
+        </button>
+        <button class="nav-item" data-page="reports">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+              stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg></span>
+          <span class="nav-label">Laporan</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="overlay" id="deleteModal">
+    <div class="modal">
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--error);">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg> Hapus Transaksi?</h3>
+      <p style="font-size:13px;color:var(--text-secondary)">Transaksi yang dihapus tidak dapat dikembalikan.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" id="cancelDelete">Batal</button>
+        <button class="btn btn-danger btn-sm" id="confirmDelete">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Transaction Modal -->
+  <div class="overlay" id="editModal">
+    <div class="modal" style="max-height:90vh;overflow-y:auto">
+      <h3 style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg> Edit Transaksi</h3>
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label>Tipe</label>
+        <select id="editType">
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Jumlah (Rp)</label>
+        <input type="text" id="editAmount" placeholder="Rp 0">
+      </div>
+      <div class="form-group">
+        <label>Kategori</label>
+        <input type="text" id="editCategory">
+      </div>
+      <div class="form-group">
+        <label>Tanggal</label>
+        <input type="date" id="editDate">
+      </div>
+      <div class="form-group">
+        <label>Keterangan</label>
+        <textarea id="editDesc" rows="3"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" id="cancelEdit">Batal</button>
+        <button class="btn btn-primary btn-sm" id="confirmEdit">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
