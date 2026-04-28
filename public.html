@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Laporan Keuangan Publik Masjid Al-Ikhlas">
+  <title>Laporan Kas Masjid Al-Ikhlas</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Specific styles for public view */
+    .public-container {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: var(--bg);
+      padding-bottom: 40px;
+      box-shadow: var(--shadow-lg);
+    }
+    .public-header {
+      background: var(--card);
+      padding: 32px 20px 24px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .public-header img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 16px;
+      border-radius: 12px;
+    }
+    .public-header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+    .public-header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--primary-bg);
+      color: var(--primary-dark);
+      border: 3px solid var(--primary);
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    .refresh-btn:hover { 
+      background: #C8E6C9; 
+      box-shadow: var(--shadow-lg); 
+      transform: translateY(-2px); 
+    }
+    
+    .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .cat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+    .cat-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .cat-name { font-size: 14px; font-weight: 600; display:flex; align-items:center; gap:10px;}
+    .cat-name .color-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .cat-amount { font-size: 14px; font-weight: 700; }
+    .cat-amount.income { color: var(--income); }
+    .cat-amount.expense { color: var(--expense); }
+    
+    .last-updated {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border);
+    }
+
+    @media(min-width:601px) {
+      .public-container { border-left:1px solid var(--border); border-right:1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+  
+  <div id="loadingOverlay" class="overlay active" style="background:var(--bg); z-index:9999;">
+    <div style="text-align:center;">
+      <div class="loading-spinner" style="border-color:var(--primary-light);border-top-color:var(--primary);width:40px;height:40px;border-width:4px;"></div>
+      <p style="margin-top:16px;font-weight:600;color:var(--primary-dark);">Memuat Data...</p>
+    </div>
+  </div>
+
+  <div class="public-container">
+    <header class="public-header">
+      <img src="logo.png" alt="Logo Masjid Al-Ikhlas">
+      <h1>Kas Masjid Al-Ikhlas</h1>
+      <p>Laporan Keuangan Terbuka & Real-time untuk Jama'ah</p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+        <button class="refresh-btn" style="margin-top:0;" id="refreshBtn" onclick="loadPublicData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Segarkan Data
+        </button>
+        <button class="refresh-btn" style="margin-top:0; background:var(--card); border:3px solid #CBD5E1; color:var(--text);" onclick="exportPublicPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          Download PDF
+        </button>
+      </div>
+    </header>
+
+    <div class="page-content" style="padding: 24px 20px;">
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card balance">
+          <div class="card-label">Saldo Saat Ini</div>
+          <div class="card-value" id="pubBalance">Rp 0</div>
+        </div>
+        <div class="summary-card income">
+          <div class="card-label">Total Pemasukan</div>
+          <div class="card-value" id="pubIncome">Rp 0</div>
+        </div>
+        <div class="summary-card expense">
+          <div class="card-label">Total Pengeluaran</div>
+          <div class="card-value" id="pubExpense">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container" style="margin-bottom: 24px;">
+        <div class="section-title" style="margin-top:0;">Grafik Ringkasan</div>
+        <canvas id="pubChart"></canvas>
+      </div>
+
+      <!-- Rincian Pemasukan -->
+      <div class="section-title" style="color:var(--income); font-size: 16px;">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          Rincian Pemasukan
+        </span>
+      </div>
+      <div class="cat-list" id="incomeList"></div>
+
+      <!-- Rincian Pengeluaran -->
+      <div class="section-title" style="color:var(--expense); font-size: 16px;">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+          Rincian Pengeluaran
+        </span>
+      </div>
+      <div class="cat-list" id="expenseList"></div>
+
+      <!-- Donation Section -->
+      <div class="section-title" style="margin-top: 32px; font-size: 16px;">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          Donasi & ZISWAF
+        </span>
+      </div>
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center;">
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px;">Salurkan infaq, sedekah, dan donasi terbaik Anda untuk operasional dan kegiatan Masjid Al-Ikhlas Adi Sucipto.</p>
+        
+        <div style="background:var(--bg); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+          <div style="font-weight:700; color:var(--primary-dark); font-size:16px; margin-bottom:4px;">Bank Syariah Indonesia (BSI)</div>
+          <div style="font-size:24px; font-weight:800; letter-spacing:1px; margin-bottom:4px; display:flex; justify-content:center; align-items:center; gap:10px;">
+            <span id="rekeningNumber">333-3334-557</span>
+            <button onclick="copyRekening()" style="background:none; border:none; color:var(--primary); cursor:pointer; padding:4px;" title="Salin Nomor Rekening">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+          <div style="font-size:13px; color:var(--text-secondary);">a.n. <strong>Masjid Al-Ikhlas Jajar</strong></div>
+        </div>
+
+        <div style="font-size:14px; font-weight:600; margin-bottom:12px; color:var(--text);">Atau Scan QRIS</div>
+        <div style="width:200px; height:200px; margin:0 auto; border:2px dashed var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; background:#fff; color:var(--text-secondary);">
+          <div style="text-align:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:48px;height:48px;margin-bottom:8px;opacity:0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
+            <br>[Placeholder QRIS]
+          </div>
+        </div>
+      </div>
+
+      <div class="last-updated" id="lastUpdated">Terakhir diperbarui: -</div>
+      
+      <div style="text-align:center; margin-top: 40px; padding-top: 24px; border-top: 1px dashed var(--border);">
+        <a href="index.html" class="btn btn-primary" style="display:inline-flex; width:auto; padding:12px 32px; font-size:14px; border-radius:24px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          Login Pengurus Masjid
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="public.js"></script>
+</body>
+</html>
