@@ -40,7 +40,8 @@ async function loadPublicData() {
     const res = await API.get('getTransactions');
     if (res.success) {
       publicTransactions = res.data || [];
-      renderPublicData(publicTransactions);
+      populateMonthFilter();
+      filterPublicDataByMonth();
       document.getElementById('lastUpdated').textContent = 'Terakhir diperbarui: ' + new Date().toLocaleString('id-ID');
     } else {
       showToast('Gagal memuat data', 'error');
@@ -139,6 +140,57 @@ function renderChart(incomeCats, expenseCats) {
   });
 }
 
+function populateMonthFilter() {
+  const select = document.getElementById('publicMonthFilter');
+  if (!select) return;
+  const months = new Set();
+  
+  publicTransactions.forEach(t => {
+    if (t.date) {
+      months.add(t.date.substring(0, 7)); // YYYY-MM
+    }
+  });
+
+  const availableMonths = Array.from(months).sort().reverse(); // Newest first
+  const currentVal = select.value;
+  
+  let html = '<option value="all">Semua Bulan</option>';
+  availableMonths.forEach(m => {
+    const [year, month] = m.split('-');
+    const dateObj = new Date(year, parseInt(month) - 1, 1);
+    const monthName = dateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    html += `<option value="${m}">${monthName}</option>`;
+  });
+  
+  select.innerHTML = html;
+
+  // Set default selection
+  if (currentVal && currentVal !== 'all' && availableMonths.includes(currentVal)) {
+    select.value = currentVal;
+  } else if (currentVal === 'all') {
+    select.value = 'all';
+  } else if (availableMonths.length > 0) {
+    const today = new Date();
+    const currentMonthStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+    if (availableMonths.includes(currentMonthStr)) {
+      select.value = currentMonthStr;
+    } else {
+      select.value = availableMonths[0]; // Or latest
+    }
+  }
+}
+
+function getFilteredPublicData() {
+  const select = document.getElementById('publicMonthFilter');
+  const val = select ? select.value : 'all';
+  if (val === 'all') return publicTransactions;
+  return publicTransactions.filter(t => t.date && t.date.startsWith(val));
+}
+
+function filterPublicDataByMonth() {
+  renderPublicData(getFilteredPublicData());
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   loadPublicData();
@@ -157,7 +209,8 @@ function copyRekening() {
 }
 
 function exportPublicPDF() {
-  if (publicTransactions.length === 0) {
+  const txs = getFilteredPublicData();
+  if (txs.length === 0) {
     showToast('Data belum tersedia', 'error');
     return;
   }
@@ -167,7 +220,7 @@ function exportPublicPDF() {
   const incomeCats = {};
   const expenseCats = {};
 
-  publicTransactions.forEach(t => {
+  txs.forEach(t => {
     const amt = Number(t.amount);
     if (t.type === 'income') {
       income += amt;

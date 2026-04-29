@@ -129,6 +129,14 @@
     </header>
 
     <div class="page-content" style="padding: 24px 20px;">
+      <!-- Filter Bulan -->
+      <div style="margin-bottom: 20px; display:flex; justify-content:flex-end; align-items:center; gap: 10px;">
+        <label for="publicMonthFilter" style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">Bulan:</label>
+        <select id="publicMonthFilter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: inherit; font-size: 14px; outline: none; cursor: pointer;" onchange="filterPublicDataByMonth()">
+          <option value="all">Semua Bulan</option>
+        </select>
+      </div>
+
       <!-- Summary Cards -->
       <div class="summary-cards">
         <div class="summary-card balance">
